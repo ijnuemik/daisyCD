@@ -1,5 +1,5 @@
 ## Project title
-daisyCD (개발 진행중)
+daisyCD
 
 ## Motivation
 ArgoCD와 같은 CD 도구를 만들어 원리를 파악하며 오픈소스를 개발해보고자 함
