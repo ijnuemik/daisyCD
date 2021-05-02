@@ -13,4 +13,4 @@ ArgoCD와 같은 CD 도구를 만들어 원리를 파악하며 오픈소스를 �
 
 - GIT 레파지토리 연결
 
-- HELM CHART 배포, 관리, 
+- HELM CHART 배포, 관리, 삭제
