@@ -88,7 +88,7 @@ func GetRepositoryList(c *gin.Context) {
 }
 
 func cloneRepository(url string, username string, token string) error {
-	directory := "git/" + strings.Split(url, "/")[4]
+	directory := "git/" + strings.Split(url,"/")[3] + "/" + strings.Split(url, "/")[4]
 	
 	options := &git.CloneOptions{
 		Auth:	  &githttp.BasicAuth{
@@ -115,4 +115,42 @@ func cloneRepository(url string, username string, token string) error {
 	}
 	fmt.Println(commit)
 	return nil
+}
+
+func PullRepository(c *gin.Context){
+	chartPath := c.PostForm("chartPath")	
+	url := "https://github.com/" + strings.Split(chartPath, "/")[1] + "/" + strings.Split(chartPath, "/")[2]
+	var repoInfo models.Repository
+	db := c.MustGet("db").(*gorm.DB)
+	if res := db.Where("url = ?", url).Find(&repoInfo); res.Error != nil {
+		c.JSON(http.StatusUnprocessableEntity, "Invalid URL")
+		return
+	}
+
+	repository, err := git.PlainOpen(chartPath)
+	if err != nil {
+		fmt.Println(err)
+	}
+	
+	worktree, err := repository.Worktree()
+	if err != nil {
+		panic(err)
+	}
+	
+	options := &git.PullOptions{
+		Auth:	  &githttp.BasicAuth{
+						Username: repoInfo.AccessUser,
+						Password: repoInfo.AccessToken,
+					},
+		RemoteName: "origin",
+		Progress: os.Stdout,
+	}
+
+	err = worktree.Pull(options)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": repository})
+
 }
