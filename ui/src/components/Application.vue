@@ -29,7 +29,7 @@
               <el-card class="box-card">
                 <div slot="header" class="clearfix">
                   <span>{{ app.releaseName }}</span>
-                  <el-button style="float: right; padding: 3px 0" type="text" v-on:click="appDelete(app.releaseName, app.releaseNamespace)">Delete</el-button>
+                  <el-button style="float: right; padding: 3px 0; color: #F56C6C" type="text" v-on:click="appDelete(app.releaseName, app.releaseNamespace)">Delete</el-button>
                 </div>
                 <div class="text item">
                   {{'Release Name: ' + app.releaseName}}
@@ -39,7 +39,9 @@
                 </div>
                 <div class="text item">
                   {{'Chart Path: ' + app.chartPath}}
-                </div>                                
+                </div>                 
+                  <el-button type="text" v-on:click="pullRepository(app.chartPath)">Git Pull</el-button>
+                  <el-button type="text" v-on:click="appDelete(app.releaseName, app.releaseNamespace)">Update Application</el-button>
               </el-card>
             </el-row>
           </el-main>
@@ -223,6 +225,31 @@
             return
           })  
         this.refresh()  
+      },
+
+      async pullRepository(chartPath){
+        console.log(chartPath)
+
+        await axios.post('/repository/pull', {'chartPath': chartPath}, this.config)
+          .then(res => {
+            console.log(res)
+          })
+          .catch(error => {
+            console.log(error)
+            retrun
+          })
+
+      },
+
+      async appUpdate(appName, appNamespace){
+        await axios.post('/helm/appupdate', {'releaseName': appName, 'releaseNamespace': appNamespace}, this.config)
+          .then(res => {
+            console.log(res)
+          })
+          .catch(error => {
+            console.log(error)
+            return
+          })          
       }
   },
 
