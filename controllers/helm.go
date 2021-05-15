@@ -19,28 +19,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func ListHelmChart(c *gin.Context){
-	var files []string
-
-    root := "/Users/isabel/Documents/ijnuemik-github/daisyCD/git-repos/"
-    err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if info.Name() == "Chart.yaml" { 
-			path = strings.Replace(path, root, "", 1)
-			path = strings.Replace(path, "Chart.yaml", "", 1)
-			files = append(files, path)
-		}
-        return nil
-    })
-    if err != nil {
-        panic(err)
-    }
-    for _, file := range files {
-        fmt.Println(file)
-    }
-	
-	c.JSON(http.StatusOK, gin.H{"data": files})
-}
-
 func getActionConfig(namespace string) (*action.Configuration, error){
 	actionConfig := new(action.Configuration)
 	var kubeConfig *genericclioptions.ConfigFlags
@@ -83,7 +61,7 @@ func InstallHelmChart(c *gin.Context){
 		return
 	}
 
-	chart, err := loadHelmchart("/Users/isabel/Documents/ijnuemik-github/daisyCD/git-repos/" + metadata.ChartPath)
+	chart, err := loadHelmchart("/Users/isabel/Documents/ijnuemik-github/daisyCD/git/" + metadata.ChartPath)
 	if err != nil{
 		c.JSON(http.StatusUnprocessableEntity, "Cannot Load Helm Chart")
 		fmt.Println(err)
@@ -96,6 +74,7 @@ func InstallHelmChart(c *gin.Context){
 		fmt.Println(err)
 		return
 	}
+
 	client := action.NewInstall(actionConfig)
 	client.Namespace = metadata.ReleaseNamespace
 	client.ReleaseName = metadata.ReleaseName
@@ -125,6 +104,28 @@ func GetApplicationList(c *gin.Context){
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": applications})
+}
+
+func ListHelmChart(c *gin.Context){
+	var files []string
+
+    root := "/Users/isabel/Documents/ijnuemik-github/daisyCD/git/"
+    err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.Name() == "Chart.yaml" { 
+			path = strings.Replace(path, root, "", 1)
+			path = strings.Replace(path, "Chart.yaml", "", 1)
+			files = append(files, path)
+		}
+        return nil
+    })
+    if err != nil {
+        panic(err)
+    }
+    for _, file := range files {
+        fmt.Println(file)
+    }
+	
+	c.JSON(http.StatusOK, gin.H{"data": files})
 }
 
 func DeleteApplication(c *gin.Context){
@@ -159,6 +160,36 @@ func DeleteApplication(c *gin.Context){
 
 	c.JSON(http.StatusOK, gin.H{"data": application})
 }
-	// func updateHelm(c *gin.Context){
 
-// }
+func UpdateApplication(c *gin.Context){
+	var application models.Application
+	if err := c.ShouldBindJSON(&application); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	chart, err := loadHelmchart("/Users/isabel/Documents/ijnuemik-github/daisyCD/git/" + application.ChartPath)
+	if err != nil{
+		c.JSON(http.StatusUnprocessableEntity, "Cannot Load Helm Chart")
+		fmt.Println(err)
+		return
+	}
+
+	actionConfig, err := getActionConfig(application.ReleaseNamespace)
+	if err != nil{
+		c.JSON(http.StatusUnprocessableEntity, "Cannot Connect Kubernetes")
+		fmt.Println(err)
+		return
+	}
+
+	client := action.NewUpgrade(actionConfig)
+	client.Namespace = application.ReleaseNamespace
+
+	release, err := client.Run(application.ReleaseName, chart, nil)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusUnprocessableEntity, "Cannot Install Chart")
+		return
+	}
+	fmt.Println("Successfully upgraded release: ", release.Name)
+}
