@@ -12,4 +12,6 @@ func RepositoryRouter(e *gin.Engine) {
 	e.POST("/repository/delete", middlewares.TokenAuthMiddleware(), controllers.DeleteRepository)
 
 	e.GET("/repository/list", middlewares.TokenAuthMiddleware(), controllers.GetRepositoryList)
+
+	e.POST("/repository/pull", middlewares.TokenAuthMiddleware(), controllers.PullRepository)
 }
