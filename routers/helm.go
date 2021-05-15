@@ -8,7 +8,12 @@ import (
 
 func HelmRouter(e *gin.Engine) {
 	e.GET("/helm/applist", middlewares.TokenAuthMiddleware(), controllers.GetApplicationList)
+
 	e.POST("/helm/appdelete", middlewares.TokenAuthMiddleware(), controllers.DeleteApplication)
+
+	e.POST("/helm/appupdate", middlewares.TokenAuthMiddleware(), controllers.UpdateApplication)
+
 	e.GET("/helm/chartlist", middlewares.TokenAuthMiddleware(), controllers.ListHelmChart)
+	
 	e.POST("/helm/installchart", middlewares.TokenAuthMiddleware(), controllers.InstallHelmChart)
 }
